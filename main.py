@@ -173,11 +173,11 @@ def formatear_reporte(df_15m, df_5m, nombre_activo, decimals):
         f"Aviso: Los datos provienen del motor de mercados financieros en tiempo real."
     )
 
-# --- CORRECCIÓN INTEGRAL: MOTOR DE BACKTESTING SIN SESGO ---
+# --- MOTOR DE BACKTESTING HISTÓRICO ---
 
 def ejecutar_backtesting_historico(ticker_symbol, dias=30):
     """
-    Simula la estrategia del bot de forma milimétrica utilizando las mechas de las velas
+    Simula la estrategia del bot utilizando las mechas de las velas
     y calculando el beneficio real según objetivos estructurales y riesgo dinámico por ATR.
     """
     try:
@@ -192,9 +192,8 @@ def ejecutar_backtesting_historico(ticker_symbol, dias=30):
         
         operaciones_totales = 0
         operaciones_ganadas = 0
-        balance_simulado = 0.0  # Ganancia o pérdida total en dólares netos
+        balance_simulado = 0.0
         
-        # Simulación paso a paso barra por barra
         for i in range(200, len(df) - 4):
             sub_df = df.iloc[:i]
             zona, eq, fvg_p, fvg_t, ob_compra, ob_venta, eqh, eql = calcular_estructuras_reales(sub_df)
@@ -205,9 +204,8 @@ def ejecutar_backtesting_historico(ticker_symbol, dias=30):
             ema200 = sub_df['EMA_200'].iloc[-1]
             atr = sub_df['ATR_14'].iloc[-1] if 'ATR_14' in sub_df.columns else close_actual * 0.002
             
-            # --- CORRECCIÓN FILTRO FANTASMA: Se evalúan áreas de acción reales ---
-            # CONDICIÓN COMPRA (LONG): Tendencia alcista y precio visitando zona barata o bloque de demanda
-            if close_actual > ema200 and low_actual <= equilibrio:
+            # CONDICIÓN COMPRA (LONG)
+            if close_actual > ema200 and low_actual <= eq:
                 entrada = ob_compra
                 sl = ob_compra - (atr * 1.5)
                 tp = eqh
@@ -215,17 +213,25 @@ def ejecutar_backtesting_historico(ticker_symbol, dias=30):
                 distancia_sl = entrada - sl
                 distancia_tp = tp - entrada
                 
-                # Evitar ratios absurdos o negativos causados por anomalías matemáticas
                 if distancia_sl <= 0 or distancia_tp <= 0:
                     continue
                 
                 ratio_real = distancia_tp / distancia_sl
-                riesgo_dolares = 20.0  # El usuario arriesga $20 fijos por trade
+                riesgo_dolares = 20.0
                 
-                # Evaluar el resultado en las velas del futuro inmediato (próximas 24 horas máximo)
                 for j in range(i, min(i + 96, len(df))):
                     futuro_high = df['High'].iloc[j]
                     futuro_low = df['Low'].iloc[j]
                     
                     if futuro_low <= sl:
-        
+                        operaciones_totales += 1
+                        balance_simulado -= riesgo_dolares
+                        break
+                    if futuro_high >= tp:
+                        operaciones_totales += 1
+                        operaciones_ganadas += 1
+                        balance_simulado += (riesgo_dolares * ratio_real)
+                        break
+                        
+            # CONDICIÓN VENTA (SHORT)
+            elif close_actual < ema200 and high_actual >= eq:
