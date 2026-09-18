@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('Agg')  # Evita que el servidor intente abrir una ventana gráfica invisible
+
 import asyncio
 import logging
 import requests
