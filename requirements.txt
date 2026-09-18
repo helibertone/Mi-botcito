@@ -1,0 +1,6 @@
+aiogram
+pandas
+pandas-ta
+mplfinance
+yfinance
+requests
