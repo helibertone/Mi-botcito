@@ -1,5 +1,5 @@
 import matplotlib
-matplotlib.use('Agg')  # Evita que el servidor intente abrir una ventana gráfica invisible
+matplotlib.use('Agg')  # Parche gráfico obligatorio para servidores en la nube como Railway
 
 import asyncio
 import logging
@@ -11,7 +11,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-# Configuración estricta de logs para monitoreo
+# Configuración estricta de logs para monitoreo en la nube
 logging.basicConfig(level=logging.INFO)
 
 # --- DATOS PERSONALES INTEGRADOS ---
@@ -21,12 +21,12 @@ MI_TELEGRAM_ID = 581924626
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# --- MOTOR ALGORÍTMICO INTEGRAL SMC OPTIMIZADO ---
+# --- MOTOR ALGORÍTMICO INTEGRAL SMC ---
 
 def calcular_estructuras_reales(df):
     """
-    Calcula de forma matemática los componentes estructurales de SMC.
-    Incluye mitigación institucional avanzada y cálculo de volatilidad por ATR.
+    Calcula matemáticamente los componentes estructurales de SMC.
+    Valida tendencias, ineficiencias y zonas de oferta/demanda mitigadas.
     """
     max_rango = float(df['High'].max())
     min_rango = float(df['Low'].min())
@@ -58,7 +58,6 @@ def calcular_estructuras_reales(df):
         if float(df['Volume'].iloc[i]) > media_volumen * 1.2:
             if float(df['Close'].iloc[i]) > float(df['Open'].iloc[i]):
                 if float(df['Close'].iloc[i-1]) < float(df['Open'].iloc[i-1]):
-                    # VALIDACIÓN: Evita bloques viejos ya mitigados por mechas posteriores
                     posible_ob = float(df['Low'].iloc[i-1])
                     if float(df['Low'].iloc[i:].min()) >= posible_ob:
                         ob_compra = posible_ob
@@ -89,7 +88,7 @@ def calcular_estructuras_reales(df):
 
 def formatear_reporte(df_15m, df_5m, nombre_activo, decimals):
     """
-    Cruza la estructura de 15m con los gatillos corregidos de 5m y calcula la gestión por ATR.
+    Cruza marcos temporales y aplica la gestión de riesgo dinámica basada en ATR.
     """
     ultimo_close = float(df_15m['Close'].iloc[-1])
     zona_cuadricula, equilibrio, fvg_p, fvg_t, ob_compra, ob_venta, eqh, eql = calcular_estructuras_reales(df_15m)
@@ -97,7 +96,7 @@ def formatear_reporte(df_15m, df_5m, nombre_activo, decimals):
     df_15m.ta.ema(length=200, append=True)
     ema200_15m = float(df_15m['EMA_200'].iloc[-1])
     
-    # Cálculo del ATR para un Stop Loss Dinámico profesional
+    # Cálculo del ATR para Stop Loss
     df_15m.ta.atr(length=14, append=True)
     atr_actual = float(df_15m['ATR_14'].iloc[-1]) if 'ATR_14' in df_15m.columns else ultimo_close * 0.002
     
@@ -108,7 +107,7 @@ def formatear_reporte(df_15m, df_5m, nombre_activo, decimals):
         bias = "BEARISH (Bajista)"
         estructura = "-CHoCH / -BOS Bajista activo"
 
-    # SOLUCIÓN LIMITACIÓN 1: Detección Real de Cambio de Estructura (+CHoCH Interno en 5m)
+    # Detección de cambio de estructura en baja temporalidad
     choch_5m = "No detectado (Compresion de precio)"
     if len(df_5m) >= 6:
         max_reciente_5m = float(df_5m['High'].iloc[-6:-2].max())
@@ -123,11 +122,10 @@ def formatear_reporte(df_15m, df_5m, nombre_activo, decimals):
     operacion = "ESPERAR"
     estado_mapa = "Filtros operativos analizando fluctuacion."
 
-    # SOLUCIÓN LIMITACIÓN 2: Gestión de riesgo profesional usando estructura + Multiplicador de ATR
     if bias == "BULLISH (Alcista)":
         operacion = "COMPRA (LONG)"
         entrada_limite = ob_compra  
-        stop_loss = ob_compra - (atr_actual * 1.5)  # SL Dinámico por debajo del bloque por volatilidad
+        stop_loss = ob_compra - (atr_actual * 1.5)
         take_profit = eqh 
         if "DISCOUNT" in zona_cuadricula and "DEtectado" in choch_5m:
             estado_mapa = "Configura tu orden LIMITE de compra en la zona POI."
@@ -136,14 +134,15 @@ def formatear_reporte(df_15m, df_5m, nombre_activo, decimals):
     else:
         operacion = "VENTA (SHORT)"
         entrada_limite = ob_venta
-        stop_loss = ob_venta + (atr_actual * 1.5)  # SL Dinámico por encima del bloque por volatilidad
+        stop_loss = ob_venta + (atr_actual * 1.5)
         take_profit = eql
         if "PREMIUM" in zona_cuadricula and "DEtectado" in choch_5m:
             estado_mapa = "Configura tu orden LIMITE de venta corta en el OB Premium."
         else:
             estado_mapa = "Estructura barata para vender o sin gatillo de confirmacion."
 
-    fvg_texto_valor = f"{fvg_p:.{decimals}f}" if fvg_p else "Ninguno"
+    # Validación de nulos obligatoria
+    fvg_texto_valor = f"{fvg_p:.{decimals}f}" if fvg_p is not None else "Ninguno"
 
     return (
         f"Consola SMC Privada: Mercados\n"
@@ -161,7 +160,7 @@ def formatear_reporte(df_15m, df_5m, nombre_activo, decimals):
         f"TARGETS DE LIQUIDEZ\n"
         f"Techos Minoristas (EQH): {eqh:.{decimals}f}\n"
         f"Suelos Minoristas (EQL): {eql:.{decimals}f}\n"
-        f"----------------------------------------\n\n"
+        f"----------------------------------------\n"
         f"PASO 3: CONFIRMACION EN BAJA (LTF 5M)\n"
         f"Gatillo Estructural: {choch_5m}\n\n"
         f"PASO 4: MAPA DE PROCEDIMIENTO Y EJECUCION\n"
@@ -174,12 +173,12 @@ def formatear_reporte(df_15m, df_5m, nombre_activo, decimals):
         f"Aviso: Los datos provienen del motor de mercados financieros en tiempo real."
     )
 
-# --- NUEVO MOTOR DE BACKTESTING INTEGRADO ---
+# --- CORRECCIÓN INTEGRAL: MOTOR DE BACKTESTING SIN SESGO ---
 
 def ejecutar_backtesting_historico(ticker_symbol, dias=30):
     """
-    Simula la estrategia del bot barra por barra durante los últimos X días
-    para calcular métricas científicas de rentabilidad y efectividad.
+    Simula la estrategia del bot de forma milimétrica utilizando las mechas de las velas
+    y calculando el beneficio real según objetivos estructurales y riesgo dinámico por ATR.
     """
     try:
         ticker = yf.Ticker(ticker_symbol)
@@ -193,39 +192,40 @@ def ejecutar_backtesting_historico(ticker_symbol, dias=30):
         
         operaciones_totales = 0
         operaciones_ganadas = 0
-        capital_inicial = 1000.0
-        capital_actual = capital_inicial
+        balance_simulado = 0.0  # Ganancia o pérdida total en dólares netos
         
-        # Simulación histórica paso a paso
+        # Simulación paso a paso barra por barra
         for i in range(200, len(df) - 4):
             sub_df = df.iloc[:i]
             zona, eq, fvg_p, fvg_t, ob_compra, ob_venta, eqh, eql = calcular_estructuras_reales(sub_df)
             
             close_actual = sub_df['Close'].iloc[-1]
+            high_actual = sub_df['High'].iloc[-1]
+            low_actual = sub_df['Low'].iloc[-1]
             ema200 = sub_df['EMA_200'].iloc[-1]
             atr = sub_df['ATR_14'].iloc[-1] if 'ATR_14' in sub_df.columns else close_actual * 0.002
             
-            # Condición de Compra Backtest
-            if close_actual > ema200 and close_actual <= eq: 
+            # --- CORRECCIÓN FILTRO FANTASMA: Se evalúan áreas de acción reales ---
+            # CONDICIÓN COMPRA (LONG): Tendencia alcista y precio visitando zona barata o bloque de demanda
+            if close_actual > ema200 and low_actual <= equilibrio:
                 entrada = ob_compra
                 sl = ob_compra - (atr * 1.5)
                 tp = eqh
                 
-                # Revisar las siguientes barras para ver si tocó TP o SL
-                for j in range(i, min(i + 24, len(df))):
+                distancia_sl = entrada - sl
+                distancia_tp = tp - entrada
+                
+                # Evitar ratios absurdos o negativos causados por anomalías matemáticas
+                if distancia_sl <= 0 or distancia_tp <= 0:
+                    continue
+                
+                ratio_real = distancia_tp / distancia_sl
+                riesgo_dolares = 20.0  # El usuario arriesga $20 fijos por trade
+                
+                # Evaluar el resultado en las velas del futuro inmediato (próximas 24 horas máximo)
+                for j in range(i, min(i + 96, len(df))):
                     futuro_high = df['High'].iloc[j]
                     futuro_low = df['Low'].iloc[j]
                     
                     if futuro_low <= sl:
-                        operaciones_totales += 1
-                        capital_actual -= 20  # Riesgo fijo simulado de $20 por operación
-                        break
-                    if futuro_high >= tp:
-                        operaciones_totales += 1
-                        operaciones_ganadas += 1
-                        capital_actual += 40  # Ratio de ganancia 1:2 estimado
-                        break
-                        
-            # Condición de Venta Backtest
-            elif close_actual < ema200 and close_actual >= eq:
-                entrada = ob_venta
+        
