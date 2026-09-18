@@ -8,22 +8,22 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-# Configuración estricta de logs para monitoreo en Railway
+# Configuración estricta de logs para monitoreo
 logging.basicConfig(level=logging.INFO)
 
-# --- CREDENCIALES DE ACCESO AUDITADAS Y SEGURAS ---
+# --- DATOS PERSONALES INTEGRADOS ---
 TOKEN = "8882275126:AAG4joJlFJCCz1wFoWxPHm8pL9CfrvAJiZg"
 MI_TELEGRAM_ID = 581924626
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# --- MOTOR ALGORÍTMICO INTEGRAL SMC ---
+# --- MOTOR ALGORÍTMICO INTEGRAL SMC OPTIMIZADO ---
 
 def calcular_estructuras_reales(df):
     """
-    Calcula de forma matemática pura los componentes estructurales de SMC:
-    Rango de trabajo, Premium/Discount, FVGs, Order Blocks y Liquidez (EQH/EQL).
+    Calcula de forma matemática los componentes estructurales de SMC.
+    Incluye mitigación institucional avanzada y cálculo de volatilidad por ATR.
     """
     max_rango = float(df['High'].max())
     min_rango = float(df['Low'].min())
@@ -32,7 +32,7 @@ def calcular_estructuras_reales(df):
     equilibrio = min_rango + (max_rango - min_rango) * 0.5
     zona_cuadricula = "🔴 PREMIUM (Caro)" if ultimo_close > equilibrio else "🟢 DISCOUNT (Barato)"
 
-    # 1. Detección Quirúrgica de Fair Value Gaps (FVG)
+    # 1. Detección de Fair Value Gaps (FVG)
     fvg_precio = None
     fvg_tipo = "Ninguno"
     for i in range(len(df) - 1, 2, -1):
@@ -45,7 +45,7 @@ def calcular_estructuras_reales(df):
             fvg_tipo = "Bajista (Iman)"
             break
 
-    # 2. Detección de Order Blocks (OB) con mitigación y volumen institucional
+    # 2. Detección de Order Blocks (OB) con Mitigación Real
     ob_compra = min_rango  
     ob_venta = max_rango   
     media_volumen = df['Volume'].mean()
@@ -55,14 +55,19 @@ def calcular_estructuras_reales(df):
         if float(df['Volume'].iloc[i]) > media_volumen * 1.2:
             if float(df['Close'].iloc[i]) > float(df['Open'].iloc[i]):
                 if float(df['Close'].iloc[i-1]) < float(df['Open'].iloc[i-1]):
-                    ob_compra = float(df['Low'].iloc[i-1])
-                    break
+                    # VALIDACIÓN: Evita bloques viejos ya mitigados por mechas posteriores
+                    posible_ob = float(df['Low'].iloc[i-1])
+                    if float(df['Low'].iloc[i:].min()) >= posible_ob:
+                        ob_compra = posible_ob
+                        break
             elif float(df['Close'].iloc[i]) < float(df['Open'].iloc[i]):
                 if float(df['Close'].iloc[i-1]) > float(df['Open'].iloc[i-1]):
-                    ob_venta = float(df['High'].iloc[i-1])
-                    break
+                    posible_ob_v = float(df['High'].iloc[i-1])
+                    if float(df['High'].iloc[i:].max()) <= posible_ob_v:
+                        ob_venta = posible_ob_v
+                        break
 
-    # 3. Identificación de Liquidez Estructural Minorista (EQH / EQL)
+    # 3. Identificación de Liquidez Estructural (EQH / EQL)
     eqh, eql = None, None
     tolerancia = 0.0008
     limite_liq = max(1, len(df) - 25)
@@ -81,14 +86,17 @@ def calcular_estructuras_reales(df):
 
 def formatear_reporte(df_15m, df_5m, nombre_activo, decimals):
     """
-    Core del sistema multi-temporal. Cruza la estructura de 15m con los gatillos de 5m
-    y devuelve la plantilla formateada para Telegram.
+    Cruza la estructura de 15m con los gatillos corregidos de 5m y calcula la gestión por ATR.
     """
     ultimo_close = float(df_15m['Close'].iloc[-1])
     zona_cuadricula, equilibrio, fvg_p, fvg_t, ob_compra, ob_venta, eqh, eql = calcular_estructuras_reales(df_15m)
 
     df_15m.ta.ema(length=200, append=True)
     ema200_15m = float(df_15m['EMA_200'].iloc[-1])
+    
+    # Cálculo del ATR para un Stop Loss Dinámico profesional
+    df_15m.ta.atr(length=14, append=True)
+    atr_actual = float(df_15m['ATR_14'].iloc[-1]) if 'ATR_14' in df_15m.columns else ultimo_close * 0.002
     
     if ultimo_close >= ema200_15m:
         bias = "BULLISH (Alcista)"
@@ -97,22 +105,26 @@ def formatear_reporte(df_15m, df_5m, nombre_activo, decimals):
         bias = "BEARISH (Bajista)"
         estructura = "-CHoCH / -BOS Bajista activo"
 
-    ultimo_close_5m = float(df_5m['Close'].iloc[-1])
-    if len(df_5m) >= 4 and ultimo_close_5m > float(df_5m['High'].iloc[-4:-1].max()):
-        choch_5m = "DEtectado (+CHoCH Interno en 5m)"
-    else:
-        choch_5m = "No detectado (Compresion de precio)"
+    # SOLUCIÓN LIMITACIÓN 1: Detección Real de Cambio de Estructura (+CHoCH Interno en 5m)
+    choch_5m = "No detectado (Compresion de precio)"
+    if len(df_5m) >= 6:
+        max_reciente_5m = float(df_5m['High'].iloc[-6:-2].max())
+        min_reciente_5m = float(df_5m['Low'].iloc[-6:-2].min())
+        ultimo_close_5m = float(df_5m['Close'].iloc[-1])
+        
+        if bias == "BULLISH (Alcista)" and ultimo_close_5m > max_reciente_5m:
+            choch_5m = "DEtectado (+CHoCH Interno en 5m)"
+        elif bias == "BEARISH (Bajista)" and ultimo_close_5m < min_reciente_5m:
+            choch_5m = "DEtectado (-CHoCH Interno en 5m)"
 
-    entrada_limite = ultimo_close
-    stop_loss = ultimo_close * 0.995
-    take_profit = ultimo_close * 1.01
     operacion = "ESPERAR"
     estado_mapa = "Filtros operativos analizando fluctuacion."
 
+    # SOLUCIÓN LIMITACIÓN 2: Gestión de riesgo profesional usando estructura + Multiplicador de ATR
     if bias == "BULLISH (Alcista)":
         operacion = "COMPRA (LONG)"
         entrada_limite = ob_compra  
-        stop_loss = ob_compra * 0.9990  
+        stop_loss = ob_compra - (atr_actual * 1.5)  # SL Dinámico por debajo del bloque por volatilidad
         take_profit = eqh 
         if "DISCOUNT" in zona_cuadricula and "DEtectado" in choch_5m:
             estado_mapa = "Configura tu orden LIMITE de compra en la zona POI."
@@ -121,9 +133,9 @@ def formatear_reporte(df_15m, df_5m, nombre_activo, decimals):
     else:
         operacion = "VENTA (SHORT)"
         entrada_limite = ob_venta
-        stop_loss = ob_venta * 1.0010  
+        stop_loss = ob_venta + (atr_actual * 1.5)  # SL Dinámico por encima del bloque por volatilidad
         take_profit = eql
-        if "PREMIUM" in zona_cuadricula and "No detectado" not in choch_5m:
+        if "PREMIUM" in zona_cuadricula and "DEtectado" in choch_5m:
             estado_mapa = "Configura tu orden LIMITE de venta corta en el OB Premium."
         else:
             estado_mapa = "Estructura barata para vender o sin gatillo de confirmacion."
@@ -143,7 +155,7 @@ def formatear_reporte(df_15m, df_5m, nombre_activo, decimals):
         f"Bloque de Demanda (OB Compra): {ob_compra:.{decimals}f}\n"
         f"Bloque de Oferta (OB Venta): {ob_venta:.{decimals}f}\n"
         f"Ineficiencia FVG Cercana: {fvg_texto_valor} ({fvg_t})\n\n"
-        f"TARGETS DE LIQUIDEZ (BARRIDOS DE STOP LOSS)\n"
+        f"TARGETS DE LIQUIDEZ\n"
         f"Techos Minoristas (EQH): {eqh:.{decimals}f}\n"
         f"Suelos Minoristas (EQL): {eql:.{decimals}f}\n"
         f"----------------------------------------\n\n"
@@ -154,87 +166,63 @@ def formatear_reporte(df_15m, df_5m, nombre_activo, decimals):
         f"Parametros de la Orden LIMITE Sugerida:\n"
         f"Direccion: {operacion}\n"
         f"Precio Entrada LIMITE: {entrada_limite:.{decimals}f}\n"
-        f"Stop Loss (Invalidez): {stop_loss:.{decimals}f}\n"
+        f"Stop Loss (ATR Protect): {stop_loss:.{decimals}f}\n"
         f"Take Profit (Objetivos): {take_profit:.{decimals}f}\n\n"
         f"Aviso: Los datos provienen del motor de mercados financieros en tiempo real."
     )
 
-def ejecutar_analisis_btc():
+# --- NUEVO MOTOR DE BACKTESTING INTEGRADO ---
+
+def ejecutar_backtesting_historico(ticker_symbol, dias=30):
+    """
+    Simula la estrategia del bot barra por barra durante los últimos X días
+    para calcular métricas científicas de rentabilidad y efectividad.
+    """
     try:
-        # En torno de alta estabilidad: Consultar Bitcoin de forma directa en Yahoo Finance
-        ticker = yf.Ticker("BTC-USD")
-        raw_15m = ticker.history(period="5d", interval="15m")
-        raw_5m = ticker.history(period="1d", interval="5m")
+        ticker = yf.Ticker(ticker_symbol)
+        df = ticker.history(period=f"{dias}d", interval="15m").dropna()
         
-        if raw_15m.empty or raw_5m.empty:
-            return "⚠️ Datos de Bitcoin no disponibles en este microsegundo. Intenta de nuevo."
+        if df.empty or len(df) < 50:
+            return "⚠️ No hay suficientes datos históricos para el Backtest."
             
-        df_15m = raw_15m.dropna()
-        df_5m = raw_5m.dropna()
-        return formatear_reporte(df_15m, df_5m, "Bitcoin Spot RealTime (BTC-USD)", 2)
-    except Exception as e:
-        logging.error(f"Fallo en API Yahoo BTC: {e}")
-        return "❌ Error de red al conectar con el servidor de Criptomonedas. Intenta de nuevo."
-
-def ejecutar_analisis_eurusd():
-    try:
-        ticker = yf.Ticker("EURUSD=X")
-        raw_15m = ticker.history(period="5d", interval="15m")
-        raw_5m = ticker.history(period="1d", interval="5m")
+        df.ta.ema(length=200, append=True)
+        df.ta.atr(length=14, append=True)
         
-        if raw_15m.empty or raw_5m.empty:
-            return "⚠️ **Mercado Cerrado u Horario Inactivo**\nNo se recibieron datos recientes del proveedor. Recuerda que Forex cierra los fines de semana."
+        operaciones_totales = 0
+        operaciones_ganadas = 0
+        capital_inicial = 1000.0
+        capital_actual = capital_inicial
+        
+        # Simulación histórica paso a paso
+        for i in range(200, len(df) - 4):
+            sub_df = df.iloc[:i]
+            zona, eq, fvg_p, fvg_t, ob_compra, ob_venta, eqh, eql = calcular_estructuras_reales(sub_df)
             
-        df_15m = raw_15m.dropna()
-        df_5m = raw_5m.dropna()
-        return formatear_reporte(df_15m, df_5m, "Euro Dolar EUR USD", 4)
-    except Exception as e:
-        logging.error(f"Fallo en API Yahoo Finance: {e}")
-        return "❌ Error de red al conectar con Yahoo Finance. Intenta de nuevo."
-
-# --- MÓDULO INTERACTIVO DE TELEGRAM ---
-
-@dp.message(Command("start"))
-async def cmd_start(message: types.Message):
-    if message.from_user.id != MI_TELEGRAM_ID:
-        return  # Filtro de ID estricto
-
-    builder = InlineKeyboardBuilder()
-    builder.row(
-        types.InlineKeyboardButton(text="🔶 Bitcoin RealTime (SMC)", callback_data="smc_BTC"),
-        types.InlineKeyboardButton(text="💶 Analizar EUR/USD (SMC)", callback_data="smc_EURUSD")
-    )
-    
-    await message.answer(
-        "Consola Algoritmica Institucional V8.0 Unificada\n\n"
-        "Monitoreo de Smart Money Concepts para colocacion manual de Ordenes Limite.",
-        reply_markup=builder.as_markup()
-    )
-
-@dp.callback_query(lambda c: c.data.startswith("smc_"))
-async def procesar_peticion_smc(callback_query: types.CallbackQuery):
-    if callback_query.from_user.id != MI_TELEGRAM_ID:
-        return
-
-    await callback_query.answer("Sincronizando con el libro de ordenes unificado...")
-    mensaje_espera = await callback_query.message.answer("Escaneando la liquidez institucional...")
-    
-    try:
-        if callback_query.data == "smc_BTC":
-            reporte_final = await asyncio.to_thread(ejecutar_analisis_btc)
-        else:
-            reporte_final = await asyncio.to_thread(ejecutar_analisis_eurusd)
+            close_actual = sub_df['Close'].iloc[-1]
+            ema200 = sub_df['EMA_200'].iloc[-1]
+            atr = sub_df['ATR_14'].iloc[-1] if 'ATR_14' in sub_df.columns else close_actual * 0.002
             
-        await callback_query.message.answer(reporte_final)
-    except Exception as e:
-        logging.error(f"Fallo en Telegram: {e}")
-        await callback_query.message.answer("Error inesperado al procesar la telemetria.")
-    finally:
-        await mensaje_espera.delete()
-
-async def main():
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
-    
+            # Condición de Compra Backtest
+            if close_actual > ema200 and close_actual <= eq: 
+                entrada = ob_compra
+                sl = ob_compra - (atr * 1.5)
+                tp = eqh
+                
+                # Revisar las siguientes barras para ver si tocó TP o SL
+                for j in range(i, min(i + 24, len(df))):
+                    futuro_high = df['High'].iloc[j]
+                    futuro_low = df['Low'].iloc[j]
+                    
+                    if futuro_low <= sl:
+                        operaciones_totales += 1
+                        capital_actual -= 20  # Riesgo fijo simulado de $20 por operación
+                        break
+                    if futuro_high >= tp:
+                        operaciones_totales += 1
+                        operaciones_ganadas += 1
+                        capital_actual += 40  # Ratio de ganancia 1:2 estimado
+                        break
+                        
+            # Condición de Venta Backtest
+            elif close_actual < ema200 and close_actual >= eq:
+                entrada = ob_venta
